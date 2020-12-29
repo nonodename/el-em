@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang='en-us'>
+<head>
+	<title>Expression Language Emulator</title>
+	<meta charset="utf-8">
+	<meta name='description' content="A browser based emulator for Microsoft's Expression Language">
+	<script src='luxon.js'></script>
+	<script src='elshim.js'></script>
+	<script>	
+	
+		var expectedHash;
+		function updateHistory(command){
+			expectedHash = '#'+uriComponent(command);
+			window.location.hash=expectedHash;
+			var node = document.createElement('p');
+			var hyperlink = document.createElement('a');
+			hyperlink.innerText = command;
+			command = command.replace(/\'/g,"\\'");
+			hyperlink.href = "javascript:replace('"+command+"\');";
+			node.appendChild(document.createTextNode(formatDateTime(utcNow(),'HH:mm.ss')+" : "));
+			node.appendChild(hyperlink);
+			var historyNode = document.getElementById('history');
+			if(historyNode.childElementCount > 0)
+				historyNode.insertBefore(node,historyNode.firstElementChild);
+			else 
+				historyNode.appendChild(node);
+		}		
+				
+		const _RESERVED_WORDS = ["this","window","document","arguments","inputEvent","stringToEval"];
+		function testExpression(inputEvent){
+			document.getElementById('output').innerText = "";
+			var stringToEval = document.getElementById('code').value;
+			stringToEval = stringToEval.replace('if(','iif('); // TODO work out a better solution for this
+			var aHighlyUnlikelyVariable="";
+			// filter key variables in scope
+			if(_RESERVED_WORDS.includes(stringToEval))
+				return;
+			
+			try {
+				aHighlyUnlikelyVariable=eval(stringToEval); 
+				switch(typeof(aHighlyUnlikelyVariable)){
+					case 'function':
+						s='Expression Language function: '+stringToEval;
+						break;
+					case 'object':
+						aHighlyUnlikelyVariable = String(aHighlyUnlikelyVariable);
+					case 'string':
+					case 'number':
+					case 'boolean':
+						updateHistory(stringToEval);
+						break;
+					default:
+						console.log('got '+typeof(aHighlyUnlikelyVariable));
+					
+				}
+			} catch (e) {
+    			aHighlyUnlikelyVariable=e.message;
+    		}
+    		document.getElementById('output').innerText = aHighlyUnlikelyVariable;
+		}
+		function hashChange(e){
+			if(location.hash === expectedHash)
+				return;
+			var s = uriComponentToString(location.hash).substring(1);
+			replace(s);
+		}
+		function replace(name){
+			document.getElementById('code').value = name;
+			testExpression();
+			return false;
+		}
+
+		function insert(name){
+			document.getElementById('code').value += name;
+			return false;
+		}
+		function copyToClipboard(){
+			var n = document.getElementById('code');
+			n.select();
+			document.execCommand("copy");
+		}
+	</script>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<header>
+		<h1>Expression Language Emulator</h1>
+		<nav>
+			<a href='https://docs.microsoft.com/en-us/azure/data-factory/control-flow-expression-language-functions#functions'>Reference</a>
+			| <a href='https://nonodename.com/post/elem/'>About</a>
+		</nav>
+	</header>
+	<main>
+	<section>
+		<label for='code'>Expression language statement</label>
+		<div class='input'>
+			<input type='text' id='code' autocapitalize='none' placeholder='e.g. startOfDay(utcNow())'></input>
+			<button title='Copy to Clipboard' class='copy' onclick='copyToClipboard()'>📋</button>
+		</div>
+		<h4>Result</h4>
+		<div id='output' class='output'>
+			Result
+		</div>
+		<h4>History</h4>
+		<div id='history' class='output'>
+		</div>
+		<script>
+			document.getElementById("code").addEventListener("input", testExpression);
+			window.onhashchange = hashChange;
+			if(window.location.hash.length > 1){
+				var s = uriComponentToString(window.location.hash).substring(1);
+				replace(s);
+			}
+		</script>
+	</section>
+	<aside>
+		<h4>Quick Reference</h4>
+		<details open='true'>
+		<summary>Strings</summary>
+		<ul>
+			<li><a href='javascript:insert("concat(a,b)");'>
+	concat(a,b)</a> - combine strings</li>
+			<li><a href='javascript:insert("endsWith(a,b)");'>
+	endsWith(a,b)</a> - does 'a' end with 'b'?</li>
+			<li><a href='javascript:insert("indexOf(a,b)");'>
+	indexOf(a,b)</a> - integer position of 'b' in 'a'</li>
+			<li><a href='javascript:insert("lastIndexOf(a,b)");'>
+	lastIndexOf(a,b)</a> - last position of 'b' in 'a'</li>
+			<li><a href='javascript:insert("replace(a,b,c)");'>
+	replace(a,b,c)</a> - replace 'b' in 'a' with 'c'</li>
+			<li><a href='javascript:insert("split(a,b)");'>
+	split(a,b)</a> - break a  into an array splitting on 'b'</li>
+			<li><a href='javascript:insert("startsWith(a,b)");'>
+	startsWith(a,b)</a> - true if 'a' begins with 'b'</li>
+			<li><a href='javascript:insert("substring(a,b)");'>
+	substring(a,b)</a> - return portion of 'a' based on position 'b'</li>
+			<li><a href='javascript:insert("toLower(a)");'>
+	toLower(a)</a> - convert 'a' to lowercase </li>
+			<li><a href='javascript:insert("toUpper(a)");'>
+	toUpper(a)</a> - convert 'a' to uppercase</li>
+			<li><a href='javascript:insert("trim(a)");'>
+	trim(a)</a> - remove whitespace start and end of 'a'</li>
+		</ul>
+		</details>
+		<details>
+		<summary>Collections</summary>
+		<ul>
+			<li><a href='javascript:insert("contains(a,b)");'>
+	contains(a,b)</a> - does 'a' contain 'b'?</li>
+			<li><a href='javascript:insert("empty(a)");'>
+	empty(a)</a> - does 'a' have no elements?</li>
+			<li><a href='javascript:insert("first(a)");'>
+	first(a)</a> - return the 1st item of 'a'</li>
+			<li><a href='javascript:insert("intersection(a,...)");'>
+	intersection(a,...)</a> - return items in all passed collections</li>
+			<li><a href='javascript:insert("join(a,b)");'>
+	join(a,b)</a> - a string with members of 'a' separated by 'b'</li>
+			<li><a href='javascript:insert("last(a)");'>
+	last(a)</a> - return the last element of 'a'</li>
+			<li><a href='javascript:insert("length(a)");'>
+	length(a)</a> - number of items in 'a'</li>
+			<li><a href='javascript:insert("skip(a,n)");'>
+	skip(a,b)</a> - remove 'n' items from front of 'a'</li>
+			<li><a href='javascript:insert("take(a,n)");'>
+	take(a,b)</a> - opposite of skip</li>
+			<li><a href='javascript:insert("union(a,...)");'>
+	union(a,...)</a> - a collection with all items from passed collections</li>
+		</ul>
+		</details>
+		<details>
+		<summary>Logical</summary>
+		<ul>
+			<li><a href='javascript:insert("and(a,b)");'>
+	and(a,b)</a> - true if both 'a' and 'b' are true</li>
+			<li><a href='javascript:insert("equals(a,b)");'>
+	equals(a,b)</a> - true if 'a' = 'b'</li>
+			<li><a href='javascript:insert("greater(a,b)");'>
+	greater(a,b)</a> - true if 'a' &gt; 'b'</li>
+			<li><a href='javascript:insert("greaterOrEquals(a,b)");'>
+	greaterOrEquals(a,b)</a> - true if 'a' &gt; 'b' or 'a' = 'b'</li>
+			<li><a href='javascript:insert("if(a,b,c)");'>
+	if(a,b,c)</a> - if a is true then return b else return c</li>
+			<li><a href='javascript:insert("less(a,b)");'>
+	less(a,b)</a> - true if a &lt; b</li>
+			<li><a href='javascript:insert("lessOrEquals(a,b)");'>
+	lessOrEquals(a,b)</a> - true if a &lt; b or a = b</li>
+			<li><a href='javascript:insert("not(a)");'>
+	not(a)</a> - false if a is true else true</li>				
+			<li><a href='javascript:insert("or(a,b)");'>
+	or(a,b)</a> - true if a or b is true</li>								
+		</ul>
+		</details>
+		<details>
+		<summary>Conversion</summary>
+		<ul>
+			<li><a href='javascript:insert("array(a)");'>
+	array(a)</a> - convert 'a' to an array</li>
+			<li><a href='javascript:insert("base64(a)");'>
+	base64(a)</a> - base64 encode 'a'</li>
+			<li><a href='javascript:insert("base64ToBinary(a)");'>
+	base64ToBinary(a)</a> - binary version of 'a'</li>
+			<li><a href='javascript:insert("base64ToString(a)");'>
+	base64ToString(a)</a> - convert 'a' from base64 to a string</li>
+			<li><a href='javascript:insert("binary(a)");'>
+	binary(a)</a> - return 'a' in binary</li>
+			<li><a href='javascript:insert("bool(a)");'>
+	bool(a)</a> - return 'a' as a boolean</li>
+			<li><a href='javascript:insert("coalesce(a,...)");'>
+	coalesce(a,...)</a> - return first non null argument</li>
+			<li><a href='javascript:insert("createArray(a,...)");'>
+	createArray(a,...)</a> - create array from arguments</li>				
+			<li><a href='javascript:insert("dataUri(a)");'>
+	dataUri(a)</a> - convert 'a' to URI format</li>		
+			<li><a href='javascript:insert("dataUriToBinary(a)");'>
+	dataUriToBinary(a)</a> - convert URI 'a' to binary format</li>
+			<li><a href='javascript:insert("dataUriToString(a)");'>
+	dataUriToString(a)</a> - convert URI 'a' to a string</li>		
+			<li><a href='javascript:insert("decodeBase64(a)");'>
+	decodeBase64(a)</a> - decode 'a' that has been base 64 encoded</li>		
+			<li><a href='javascript:insert("dataUri(a)");'>
+	dataUri(a)</a> - convert 'a' to URI format</li>		
+			<li><a href='javascript:insert("decodeUriComponent(a)");'>
+	decodeUriComponent(a)</a> - convert 'a' from URI format</li>		
+			<li><a href='javascript:insert("encodeUriComponent(a)");'>
+	encodeUriComponent(a)</a> - convert 'a' to URI format</li>		
+			<li><a href='javascript:insert("float(a)");'>
+	float(a)</a> - convert 'a' to a floating point number</li>	
+			<li><a href='javascript:insert("int(a)");'>
+	int(a)</a> - convert 'a' to an integer</li>	
+			<li><a href='javascript:insert("json(a)");'>
+	json(a)</a> - (&alpha;) convert 'a' to JSON representation</li>	
+			<li><a href='javascript:insert("string(a)");'>
+	string(a)</a> - convert 'a' to a string</li>	
+			<li><a href='javascript:insert("uriComponent(a)");'>
+	uriComponent(a)</a> - URI encode 'a'</li>	
+			<li><a href='javascript:insert("uriComponentToBinary(a)");'>
+	uriComponentToBinary(a)</a> - convert URI 'a' to binary</li>	
+			<li><a href='javascript:insert("uriComponentToString(a)");'>
+	uriComponentToString(a)</a> - convert URI 'a' to a string</li>	
+			<li><a href='javascript:insert("xml(a)");'>
+	xml(a)</a> - (&alpha;) convert 'a' to an XML representation</li>					
+			<li><a href='javascript:insert("xpath(x,xp)");'>
+	xpath(x,xp)</a> - <a href='https://www.freeformatter.com/xpath-tester.html'>not implemented</a>: return nodes of XML 'x' that match xPath 'xp'</li>																			
+		</ul>
+		</details>
+		<details>
+		<summary>Math</summary>
+		<ul>
+			<li><a href='javascript:insert("add(a,b)");'>
+	add(a,b)</a> - add 'a' to 'b' </li>
+			<li><a href='javascript:insert("div(a,b)");'>
+	div(a,b)</a> - divide 'a' by 'b' </li>
+			<li><a href='javascript:insert("max(a,...)");'>
+	max(a,...))</a> - return the largest argument </li>
+			<li><a href='javascript:insert("min(a,b)");'>
+	min(a,...)</a> - return the smallest argument </li>
+			<li><a href='javascript:insert("mod(a,b)");'>
+	mod(a,b)</a> - remainder from dividing  'a' by 'b' </li>
+			<li><a href='javascript:insert("mul(a,b)");'>
+	mul(a,b)</a> - multiply 'a' by 'b' </li>
+			<li><a href='javascript:insert("rand(a,b)");'>
+	rand(a,b)</a> - return a random number between 'a' and 'b' </li>
+			<li><a href='javascript:insert("range(a,b)");'>
+	range(a,b)</a> - integer array of 'b' elements starting at 'a'</li>			
+			<li><a href='javascript:insert("sub(a,b)");'>
+	sub(a,b)</a> - subtract 'b' from 'a'</li>
+		</ul>
+		</details>
+		<details>
+		<summary>Dates</summary>
+		<ul>
+			<li><a href='javascript:insert("addDays(a,b,c)");'>
+	addDays(a,b,c)</a> - add 'b' days to timestamp 'a' format using 'c'</li>
+			<li><a href='javascript:insert("addHours(a,b,c)");'>
+	addHours(a,b,c)</a> - add 'b' hours to timestamp 'a' format using 'c'</li>
+			<li><a href='javascript:insert("addMinutes(a,b,c)");'>
+	addMinutes(a,b,c)</a> - add 'b' minutes to timestamp 'a' format using 'c'</li>
+			<li><a href='javascript:insert("addSeconds(a,b,c)");'>
+	addSeconds(a,b,c)</a> - add 'b' seconds to timestamp 'a' format using 'c'</li>
+			<li><a href='javascript:insert("addToTime(a,b,c,d)");'>
+	addToTime(a,b,c,d)</a> - add 'b' of interval 'c' to timestamp 'a' format using 'd'</li>			
+			<li><a href='javascript:insert("convertFromUtc(a,b,c)");'>
+	convertFromUtc(a,b,c)</a> - convert timestamp 'a' to destination timezone 'b' format using 'c'</li>
+			<li><a href='javascript:insert("convertTimeZone(a,b,c,d)");'>
+	convertTimeZone(a,b,c,d)</a> - convert timestamp 'a' from timezone 'b' to timezone 'c' format using 'd'</li>
+			<li><a href='javascript:insert("convertToUtc(a,b,c)");'>
+	convertToUtc(a,b,c)</a> - convert timestamp 'a' from timezone 'b' to UTC, format using 'c'</li>
+			<li><a href='javascript:insert("dayOfMonth(a)");'>
+	dayOfMonth(a)</a> - return the day of month for timestamp 'a'</li>
+			<li><a href='javascript:insert("dayOfWeek(a)");'>
+	dayOfWeek(a)</a> - return the day of month for timestamp 'a'</li>
+			<li><a href='javascript:insert("dayOfYear(a)");'>
+	dayOfYear(a)</a> - return the day of month for timestamp 'a'</li>
+			<li><a href='javascript:insert("formatDateTime(a,b)");'>
+	formatDateTime(a,b)</a> - return timestamp 'a' formatted using format string 'b'</li>
+			<li><a href='javascript:insert("getFutureTime(a,b,c)");'>
+	getFutureTime(a,b,c)</a> - return a 'a' number of 'b' units from current time, format using 'c'</li>
+			<li><a href='javascript:insert("getPastTime(a,b,c)");'>
+	getPastTime(a,b,c)</a> - return a 'a' number of 'b' units back from current time, format using 'c'</li>
+			<li><a href='javascript:insert("startOfDay(a)");'>
+	startOfDay(a)</a> - return timestamp 'a' rounded down to start of day</li>
+			<li><a href='javascript:insert("startOfHour(a)");'>
+	startOfHour(a)</a> - return timestamp 'a' rounded down to start of hour</li>
+			<li><a href='javascript:insert("startOfMonth(a)");'>
+	startOfMonth(a)</a> - return timestamp 'a' rounded down to start of month</li>
+			<li><a href='javascript:insert("subtractFromTime(a,b,c,d)");'>
+	subtractFromTime(a,b,c,d)</a> - substract 'b' of interval 'c' to timestamp 'a' format using 'd'</li>			
+			<li><a href='javascript:insert("ticks(a)");'>
+	ticks(a)</a> - return number of ticks since timestamp 'a'</li>
+			<li><a href='javascript:insert("utcNow()");'>
+	utcNow()</a> - return current time</li>
+	</aside>
+	</main>
+	<footer>
+		&copy; Nonodename 2020 | Feedback? &#x1F426; <a href='https://twitter.com/nonodename'>@nonodename</a> | <a href='changeHistory.html'>Change History</a> | <a href='test/index.html'>Unit tests</a> | <a href='https://github.com/nonodename/el-em'>Source</a>
+	</footer>
+</body>
+</html>
+	
