@@ -120,7 +120,7 @@ label {
 #history {
 	overflow-y: scroll;
 	min-height:100px;
-	height: calc(100% - 150px);
+	height: calc(100% - 115px);
 }
 
 #history p {
