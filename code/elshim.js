@@ -1,14 +1,12 @@
 'use strict';
 
-function EvalException(message) {
-	this.message = message;
-	this.name = 'UserException';
-}
-
-function argumentHelper(count,type,functionName,params){
+function argumentHelper(lowCount,highCount,type,functionName,params){
 	var args = Array.prototype.slice.call(params);
-	if(args.length !== count){
-		throw new TypeError(functionName+": expects at least "+count+" arguments");
+	if(args.length < lowCount){
+		throw new TypeError(functionName+": expects at least "+lowCount+" arguments");
+	}
+	if(args.length > highCount){
+		throw new TypeError(functionName+": expects no more than  "+highCount+" arguments");
 	}
 	if (!args.every(i => (typeof(i) === type))) {
     	throw new TypeError(functionName+' expects arguments of type '+type);
@@ -17,19 +15,15 @@ function argumentHelper(count,type,functionName,params){
 }
 // String functions
 function concat(){
-	if(arguments.length < 1)
-		throw new TypeError("concat(): expects at least one arguments");
+	argumentHelper(1,Number.MAX_SAFE_INTEGER,"string","concat()",arguments)
 	var s="";
 	for(var i in arguments){
-		if(typeof(arguments[i]) !== "string")
-			throw new TypeError("concat(): expects only string arguments");
-		else
-			s+=arguments[i];
+		s+=arguments[i];
 	}
 	return s;
 }
 function endsWith(text, searchText){
-	argumentHelper(2,'string',"endsWith()",arguments)
+	argumentHelper(2,2,'string',"endsWith()",arguments)
 	return text.endsWith(searchText);
 }
 // see https://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid
@@ -40,23 +34,23 @@ function guid() {
 	});
 }
 function indexOf(text,searchText){
-	argumentHelper(2,'string',"indexOf()",arguments)
+	argumentHelper(2,2,'string',"indexOf()",arguments)
 	return text.indexOf(searchText);
 }
 function lastIndexOf(text,searchText){
-	argumentHelper(2,'string',"lastIndexOf()",arguments)
+	argumentHelper(2,2,'string',"lastIndexOf()",arguments)
 	return text.lastIndexOf(searchText);
 }
 function replace(text,oldText,newText){
-	argumentHelper(3,'string',"replace()",arguments)
+	argumentHelper(3,3,'string',"replace()",arguments)
 	return text.replace(oldText,newText);
 }
 function split(text,delimiter){
-	argumentHelper(2,'string',"split()",arguments)
+	argumentHelper(2,2,'string',"split()",arguments)
 	return text.split(delimiter);
 }
 function startsWith(text, searchText){
-	argumentHelper(2,'string',"startsWith()",arguments)
+	argumentHelper(2,2,'string',"startsWith()",arguments)
 	return text.startsWith(searchText);
 }
 function substring(text, startIndex,length){
@@ -71,15 +65,15 @@ function substring(text, startIndex,length){
 	return text.substr(startIndex,length);
 }
 function toLower(text){
-	argumentHelper(1,'string',"toLower()",arguments)
+	argumentHelper(1,1,'string',"toLower()",arguments)
 	return text.toLowerCase();
 }
 function toUpper(text){
-	argumentHelper(1,'string',"toUpper()",arguments)
+	argumentHelper(1,1,'string',"toUpper()",arguments)
 	return text.toUpperCase();
 }
 function trim(text){
-	argumentHelper(1,'string',"toUpper()",arguments)
+	argumentHelper(1,1,'string',"toUpper()",arguments)
 	return text.trim();
 }
 
@@ -182,7 +176,7 @@ function skip(collection, count){
 	if(Array.isArray(collection) && typeof(count)==='number'){
 		return collection.slice(count);
 	} else {
-		throw EvalException("skip(): works on arrays only, expects second param to be a number");
+		throw new TypeError("skip(): works on arrays only, expects second param to be a number");
 	}
 }
 // Return items from the front of a collection.
@@ -319,23 +313,23 @@ function or(expression1, expression2){
 }
 //  Conversion Functions
 function array(value){
-	argumentHelper(1,'string',"array()",arguments);
+	argumentHelper(1,1,'string',"array()",arguments);
 	return [value];
 }
 function base64(value){
-	argumentHelper(1,'string',"base64()",arguments);
+	argumentHelper(1,1,'string',"base64()",arguments);
 	return btoa(value);
 }
 function base64ToBinary(value){
-	argumentHelper(1,'string',"base64ToBinary()",arguments);
+	argumentHelper(1,1,'string',"base64ToBinary()",arguments);
 	return binary(value);
 }
 function base64ToString(value){
-	argumentHelper(1,'string',"base64ToString()",arguments);
+	argumentHelper(1,1,'string',"base64ToString()",arguments);
 	return atob(value);
 }
 function binary(value){
-	argumentHelper(1,'string',"binary()",arguments);
+	argumentHelper(1,1,'string',"binary()",arguments);
 	var b = "";
 	for(var i in value){
 		b+=value.charCodeAt(i).toString(2).padStart(8,'0');
@@ -392,21 +386,21 @@ function createArray(){
 	return result;
 }
 function dataUri(value){
-	argumentHelper(1,'string',"dataUri()",arguments);
+	argumentHelper(1,1,'string',"dataUri()",arguments);
 	if(null == value || value.length < 1)
 		throw new TypeError("dataUri(): only works on non zero length strings");
 	return "data:text/plain;charset=utf-8;base64,"+btoa(value);
 }
 // naive implementations based on there being no whitespace in the URI
 function dataUriToBinary(value){
-	argumentHelper(1,'string',"dataUriToBinary()",arguments);
+	argumentHelper(1,1,'string',"dataUriToBinary()",arguments);
 	if(null!=value && value.startsWith('data:text/plain;charset=utf-8;base64,'))
 		return binary(value);
 	else 
 		throw new TypeError("dataUriToBinary(): not a data URI");
 }
 function dataUriToString(value){
-	argumentHelper(1,'string',"dataUriToString()",arguments);
+	argumentHelper(1,1,'string',"dataUriToString()",arguments);
 	if(null!=value && value.startsWith('data:text/plain;charset=utf-8;base64,'))
 		return atob(value.substr(37));
 	else 
@@ -419,19 +413,19 @@ function decodeDataUri(value){
 	return dataUriToBinary(value);
 }
 function decodeUriComponent(value){
-	argumentHelper(1,'string',"decodeUriComponent()",arguments);
+	argumentHelper(1,1,'string',"decodeUriComponent()",arguments);
 	return decodeURIComponent(value);
 }
 function encodeUriComponent(value){
-	argumentHelper(1,'string',"encodeUriComponent()",arguments);
+	argumentHelper(1,1,'string',"encodeUriComponent()",arguments);
 	return uriComponent(value);
 }
 function float(value){
-	argumentHelper(1,'string',"float()",arguments);
+	argumentHelper(1,1,'string',"float()",arguments);
 	return parseFloat(value);	
 }
 function int(value){
-	argumentHelper(1,'string',"int()",arguments);
+	argumentHelper(1,1,'string',"int()",arguments);
 	return parseInt(value);	
 }
 function json(value){
@@ -454,15 +448,15 @@ function string(value){
 	return String(value);
 }
 function uriComponent(value){
-	argumentHelper(1,'string',"uriComponent()",arguments);
+	argumentHelper(1,1,'string',"uriComponent()",arguments);
 	return encodeURIComponent(value);
 }
 function uriComponentToBinary(value){
-	argumentHelper(1,'string',"uriComponentToBinary()",arguments);
+	argumentHelper(1,1,'string',"uriComponentToBinary()",arguments);
 	return binary(value);
 }
 function uriComponentToString(value){
-	argumentHelper(1,'string',"uriComponentToString()",arguments);
+	argumentHelper(1,1,'string',"uriComponentToString()",arguments);
 	return decodeURIComponent(value);
 }
 // from https://stackoverflow.com/questions/48788722/json-to-xml-using-javascript
@@ -488,155 +482,220 @@ function xml(value){
 }
 
 function xpath(value){
-	throw new EvalException("xpath: to be implemented");
+	throw new TypeError("xpath: to be implemented");
 }
 // math functions
 function add(number1, number2){
-	if(typeof(number1) === 'number' && typeof(number2) === 'number')
-			return number1+number2;
-	else
-		throw new EvalException("add: expects integers or floats");					
+	argumentHelper(2,2,'number',"add()",arguments);
+	return number1+number2;
 }
 function div(number1, number2){
-	if(typeof(number1) === 'number' && typeof(number2) === 'number'){
-		var result = number1/number2;
-		if(result>=0)
-			return Math.floor(result);
-		else
-			return Math.ceil(result);
-	} else
-		throw new EvalException("div: expects integers or floats");					
+	argumentHelper(2,2,'number',"div()",arguments);
+	var result = number1/number2;
+	if(result>=0)
+		return Math.floor(result);
+	else
+		return Math.ceil(result);
 }
-function max(value){
-	throw new EvalException("max: to be implemented");
+function max(){
+	if(arguments.length < 1)
+		throw new TypeError("max(): expect at least one argument");
+	var args;
+	if(Array.isArray(arguments[0])){
+		args = arguments[0];
+	} else {
+		args = Array.prototype.slice.call(arguments);
+	}
+	var m=args[0];
+	for(var i in args){
+		if(typeof(args[i]) !== 'number')
+			throw new TypeError("max(): type "+typeof(args[i])+" not supported");
+		if(args[i]>m)
+			m=args[i];
+	}
+	return m
 }
-function min(value){
-	throw new EvalException("min: to be implemented");
+function min(){
+	if(arguments.length < 1)
+		throw new TypeError("min(): expect at least one argument");
+	var args;
+	if(Array.isArray(arguments[0])){
+		args = arguments[0];
+	} else {
+		args = Array.prototype.slice.call(arguments);
+	}
+	var m=args[0];
+	for(var i in args){
+		if(typeof(args[i]) !== 'number')
+			throw new TypeError("min(): type "+typeof(args[i])+" not supported");
+		if(args[i]<m)
+			m=args[i];
+	}
+	return m
 }
 function mod(number1, number2){
-	if(typeof(number1) === 'number' && typeof(number2) === 'number'){
-		return number1%number2;
-	} else
-		throw new EvalException("mod: expects integers or floats");					
+	argumentHelper(2,2,'number',"mod()",arguments);
+	return number1%number2;
 }
 function mul(number1, number2){
-	if(typeof(number1) === 'number' && typeof(number2) === 'number'){
-		return number1*number2;
-	} else
-		throw new EvalException("mul: expects integers or floats");					
+	argumentHelper(2,2,'number',"mul()",arguments);
+	return number1*number2;
 }
 function rand(minValue,maxValue){
-	if(typeof(minValue) === 'number' && typeof(maxValue) === 'number'){
-		return Math.floor((Math.random()*(maxValue-minValue))+minValue);
-	} else
-		throw new EvalException("rand: expects integers");					
+	argumentHelper(2,2,'number',"rand()",arguments);
+	return Math.floor((Math.random()*(maxValue-minValue))+minValue);
 }
 function range(startIndex,count){
-	throw new EvalException("range: to be implemented");
+	argumentHelper(2,2,'number',"range()",arguments);
+	if(Number.isInteger(startIndex) && Number.isInteger(count)){
+		let a = new Array(count);
+		for(var i = 0;i<a.length;i++){
+			a[i]=i+startIndex;
+		}
+		return a;
+	} else {
+		throw new TypeError("range(): requires integer arguments");
+	}
 }
 function sub(number1, number2){
-	if(typeof(number1) === 'number' && typeof(number2) === 'number'){
-		return number1-number2;
-	} else
-		throw new EvalException("mul: expects integers or floats");					
+	argumentHelper(2,2,'number',"sub()",arguments);
+	return number1-number2;
 }
 
-
 // Date functions
+
+// In theory, all timestamps in Expression language are in ISO format
+// However the docs show some examples in dd/mm/yyyy format, for example
+// https://docs.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#convertToUtc
+// convertToUtc('01/01/2018 00:00:00', 'Pacific Standard Time')
+// See also https://github.com/MicrosoftDocs/azure-docs/issues/69849
+function _parseTimestamp(timestamp){
+	if(timestamp != null && typeof(timestamp)!=='string')
+		throw new TypeError("Can't parse timestamp: "+timestamp);
+	if(timestamp.indexOf('/') > 0){
+		return luxon.DateTime.fromFormat(timestamp,"D TT",{ setZone: true })
+	} else {
+		return luxon.DateTime.fromISO(timestamp, { setZone: true }); 
+	}
+}
 
 // Note that due to differences between .NET and JavaScript these are not exact down to 
 // usage of punctuation.
 // See https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-date-and-time-format-strings
 // and https://tc39.es/ecma402/#datetimeformat-objects
+// 
 function _formatHelper(timestamp,format){
-	if(null!=format && typeof(format)==='string' && format.length > 0)
-		if(format.length===1){
-			switch(format){
-						// 6/15/2009 (en-US)
-				case 'd': return timestamp.toLocaleString(luxon.DateTime.DATE_SHORT);	
-						// Monday, June 15, 2009 (en-US)
-				case 'D': return timestamp.toLocaleString(luxon.DateTime.DATE_HUGE);	
-						// Monday, June 15, 2009 1:45 PM (en-US)
-				case 'f': return timestamp.toLocaleString({year:'numeric', month: 'long', 
-					day: 'numeric', hour:'numeric',
-					minute:'numeric',weekday:'long' });		
-						// Monday, June 15, 2009 1:45:30 PM (en-US)
-				case 'F': return timestamp.toLocaleString({year:'numeric', month: 'long', 
-					day: 'numeric', hour:'numeric',
-					minute:'numeric',second:'numeric',weekday:'long' });	
-						// 6/15/2009 1:45 PM
-				case 'g': return timestamp.toLocaleString({year:'numeric', month: 'numeric', 
-					day: 'numeric', hour:'numeric',
-					minute:'numeric' });				
-						// 6/15/2009 1:45:30 PM (en-US)		
-				case 'G': return timestamp.toLocaleString({year:'numeric', month: 'numeric', 
-					day: 'numeric', hour:'numeric',
-					minute:'numeric', second: 'numeric'});	
-						// June 15 (en-US)
-				case 'M': 
-				case 'm': return timestamp.toLocaleString({month: 'long', 
-					day: 'numeric'});						
-				case 'O':
-				case 'o': return timestamp.toISO();
-				case 'R':
-				case 'r': return timestamp.toHTTP();
-						// 2009-06-15T13:45:30
-				case 's': return timestamp.toFormat("yyyy-MM-dd'T'HH:mm:ss");
-						// 1:45 PM
-				case 't': return timestamp.toLocaleString(luxon.DateTime.TIME_SIMPLE);
-						// 1:45:30 PM
-				case 'T': return timestamp.toLocaleString(luxon.DateTime.TIME_WITH_SECONDS);
-						// 2009-06-15 13:45:30Z
-				case 'u': return timestamp.toFormat("yyyy-MM-dd HH:mm:ss'Z'");
-						// Monday, June 15, 2009 8:45:30 PM (en-US)
-				case 'U': return timestamp.toLocaleString({year:'numeric', month: 'long', 
-					day: 'numeric', weekday: 'long', hour:'numeric',
-					minute:'numeric', second: 'numeric'});
-						// June 2009
-				case 'Y': 
-				case 'y': return timestamp.toLocaleString({year:'numeric', month: 'long'});
-				default: throw new EvalException("Unknown single char format specifier "+specifier);
-			}
-		} else {
-			return timestamp.toFormat(format);
+	if(null==format || format.length < 1)
+		format = 'o';
+	if( typeof(format)!=='string')
+		throw new TypeError("date functions: expect format to be a string");
+	if(format.length===1){
+		switch(format){
+					// 6/15/2009 (en-US)
+			case 'd': return timestamp.toLocaleString(luxon.DateTime.DATE_SHORT);	
+					// Monday, June 15, 2009 (en-US)
+			case 'D': return timestamp.toLocaleString(luxon.DateTime.DATE_HUGE);	
+					// Monday, June 15, 2009 1:45 PM (en-US)
+			case 'f': return timestamp.toLocaleString({year:'numeric', month: 'long', 
+				day: 'numeric', hour:'numeric',
+				minute:'numeric',weekday:'long' });		
+					// Monday, June 15, 2009 1:45:30 PM (en-US)
+			case 'F': return timestamp.toLocaleString({year:'numeric', month: 'long', 
+				day: 'numeric', hour:'numeric',
+				minute:'numeric',second:'numeric',weekday:'long' });	
+					// 6/15/2009 1:45 PM
+			case 'g': return timestamp.toLocaleString({year:'numeric', month: 'numeric', 
+				day: 'numeric', hour:'numeric',
+				minute:'numeric' });				
+					// 6/15/2009 1:45:30 PM (en-US)		
+			case 'G': return timestamp.toLocaleString({year:'numeric', month: 'numeric', 
+				day: 'numeric', hour:'numeric',
+				minute:'numeric', second: 'numeric'});	
+					// June 15 (en-US)
+			case 'M': 
+			case 'm': return timestamp.toLocaleString({month: 'long', 
+				day: 'numeric'});						
+			case 'O':
+			case 'o': if(timestamp.offset === 0)	// Not very sensible but this is how EL seems to work
+						return timestamp.toFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'0000Z'");
+					  else
+					  	return timestamp.toFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'0000'");
+			case 'R':
+			case 'r': return timestamp.toHTTP();
+					// 2009-06-15T13:45:30
+			case 's': return timestamp.toFormat("yyyy-MM-dd'T'HH:mm:ss");
+					// 1:45 PM
+			case 't': return timestamp.toLocaleString(luxon.DateTime.TIME_SIMPLE);
+					// 1:45:30 PM
+			case 'T': return timestamp.toLocaleString(luxon.DateTime.TIME_WITH_SECONDS);
+					// 2009-06-15 13:45:30Z
+			case 'u': return timestamp.toFormat("yyyy-MM-dd HH:mm:ss'Z'");
+					// Monday, June 15, 2009 8:45:30 PM (en-US)
+			case 'U': return timestamp.toLocaleString({year:'numeric', month: 'long', 
+				day: 'numeric', weekday: 'long', hour:'numeric',
+				minute:'numeric', second: 'numeric'});
+					// June 2009
+			case 'Y': 
+			case 'y': return timestamp.toLocaleString({year:'numeric', month: 'long'});
+			default: throw new TypeError("Unknown single char format specifier "+specifier);
 		}
-	else 
-		return timestamp.toISO();
+	} else {
+		return timestamp.toFormat(format);
+	}
 }
 // Helper for the next four
-function _addDelta(datetime,unit,amount,format){
+function _addDelta(timestamp,unit,amount,format){
 	var u = unit;
+	if(null===timestamp || typeof(timestamp) !== 'string')
+		throw new TypeError("add<time>(): timestamp must be a non null string");
+	if(null===amount || typeof(amount) !== 'number')
+		throw new TypeError("add<time>(): unit must be a non null number");
+	var datetime = _parseTimestamp(timestamp);
 	if(unit.charAt(unit.length-1) !== 's'){	// convert from MSFT to Luxon
 		u = unit+'s';
 	}
-	var dt = datetime.plus({[u]:amount});
-	return _formatHelper(dt,format);
+	datetime = datetime.plus({[u]:amount});
+	return _formatHelper(datetime,format);
 }
 // Add a number of days to a timestamp.
 function addDays(timestamp, days, format){
-	return _addDelta(luxon.DateTime.fromISO(timestamp),'days',days, format);
+	return _addDelta(timestamp,'days',days, format);
 }
 // Add a number of hours to a timestamp.
 function addHours(timestamp, hours, format){
-	return _addDelta(luxon.DateTime.fromISO(timestamp),'hours',hours, format);
+	return _addDelta(timestamp,'hours',hours, format);
 }
 // Add a number of minutes to a timestamp.
 function addMinutes(timestamp, minutes, format){
-	return _addDelta(luxon.DateTime.fromISO(timestamp),'minutes',minutes, format);
+	return _addDelta(timestamp,'minutes',minutes, format);
 }
 // Add a number of seconds to a timestamp.
 function addSeconds(timestamp, seconds, format){
-	return _addDelta(luxon.DateTime.fromISO(timestamp),'seconds',seconds, format);
+	return _addDelta(timestamp,'seconds',seconds, format);
 }
-
-const _VALID_UNITS = ['second','minute','hour','day','week','month','year'];
 
 // Add a number of time units to a timestamp. See also getFutureTime.
 function addToTime(timestamp, interval,timeunit, format){
-	if(_VALID_UNITS.includes(timeunit))
-		return _addDelta(luxon.DateTime.fromISO(timestamp),timeunit,interval, format);
-	else 
-		throw new EvalException("Unrecognized time unit: "+timeunit);
+	if(arguments.length < 3)
+		throw new TypeError("timeFunctions: Not enough arguments");
+	if(arguments.length > 4)
+		throw new TypeError("timeFunctions: Too many arguments");
+	if(typeof(interval)!== "number")
+		throw new TypeError("timeFunctions: interval argument should be a number")
+	if(format != null && typeof(format)!== "string")
+		throw new TypeError("timeFunctions: format argument should be a string")
+	switch(timeunit){
+		case 'Second':
+		case 'Minute':
+		case 'Hour'	:
+		case 'Day': 
+		case 'Week':
+		case 'Month' :
+		case 'Year':
+			return _addDelta(timestamp,timeunit,interval, format);
+		default:
+			throw new TypeError("Unrecognized time unit: "+timeunit);
+	}
 }
 // See https://docs.microsoft.com/en-us/previous-versions/windows/embedded/ms912391(v=winembedded.11)
 function _mapTimeZone(tz){
@@ -667,6 +726,7 @@ function _mapTimeZone(tz){
 		case "Azores Standard Time":
 		case "Cape Verde Standard Time": return "UTC-1";
 		case "GMT Standard Time":
+		case "UTC":
 		case "Greenwich Standard Time": return "UTC";
 		case "Central Europe Standard Time":
 		case "Central European Standard Time":
@@ -716,7 +776,7 @@ function _mapTimeZone(tz){
 		case "Fiji Islands Standard Time": 
 		case "New Zealand Standard Time": return "UTC+12";
 		case "Tonga Standard Time": return "UTC+13";
-		default: throw new EvalException("Unrecognized Time Zone: "+tz);
+		default: throw new TypeError("Unrecognized Time Zone: "+tz);
 	}
 }
 function _mapTimeZonebyID(tz){
@@ -796,83 +856,96 @@ function _mapTimeZonebyID(tz){
 		case "285": 
 		case "290": return "UTC+12";
 		case "300": return "UTC+13";
-		default: throw new EvalException("Unrecognized Time Zone Index: "+tz);
+		default: throw new TypeError("Unrecognized Time Zone Index: "+tz);
 	}
 }
 // Convert a timestamp from Universal Time Coordinated (UTC) to the target time zone.
 function convertFromUtc(timestamp, destinationTimeZone, format){
-	var dt = luxon.DateTime.fromISO(timestamp);
+	argumentHelper(2,3,'string',"convertFromUtc()",arguments);
+	var dt = _parseTimestamp(timestamp);
 	dt = dt.setZone(_mapTimeZone(destinationTimeZone));
 	return _formatHelper(dt,format);
 }
 // Convert a timestamp from the source time zone to the target time zone.
 function convertTimeZone(timestamp,sourceTimeZone,destinationTimeZone,format){
-	var dt = luxon.DateTime.fromISO(timestamp);
+	argumentHelper(3,4,'string',"convertTimeZone()",arguments);
+	var dt = _parseTimestamp(timestamp);
 	dt = dt.setZone(_mapTimeZone(sourceTimeZone));
 	dt = dt.setZone(_mapTimeZone(destinationTimeZone));
 	return _formatHelper(dt,format);
 }
 // Convert a timestamp from the source time zone to Universal Time Coordinated (UTC).
+// TODO - handle non ISO format timestamps which MSFT magically manage
 function convertToUtc(timestamp,sourceTimeZone,format){
-	var dt = luxon.DateTime.fromISO(timestamp);
+	argumentHelper(2,3,'string',"convertFromUtc()",arguments);
+	var dt = _parseTimestamp(timestamp);
 	dt = dt.setZone(_mapTimeZone(sourceTimeZone));
 	return _formatHelper(dt,format);
 }
 // Return the day of the month component from a timestamp.
 function dayOfMonth(timestamp){
-	var dt = luxon.DateTime.fromISO(timestamp);
-	return dt.month;
+	argumentHelper(1,1,'string',"dayOfMonth()",arguments);
+	var dt = _parseTimestamp(timestamp);
+	return dt.day;
 }
 // 	Return the day of the week component from a timestamp.
 function dayOfWeek(timestamp){
-	var dt = luxon.DateTime.fromISO(timestamp);
+	argumentHelper(1,1,'string',"dayOfWeek()",arguments);
+	var dt = _parseTimestamp(timestamp);
 	return dt.weekday;
 }
 // 	Return the day of the year component from a timestamp.
 function dayOfYear(timestamp){
-	var dt = luxon.DateTime.fromISO(timestamp);
+	argumentHelper(1,1,'string',"dayOfYear()",arguments);
+	var dt = _parseTimestamp(timestamp);
 	return parseInt(dt.toFormat('o'));	// ordinal/day of year
 }
 // Return the timestamp as a string in optional format.
 function formatDateTime(timestamp, format){
-	var dt = luxon.DateTime.fromISO(timestamp);
+	argumentHelper(1,2,'string',"formatDateTime()",arguments);
+	var dt = _parseTimestamp(timestamp);
 	return _formatHelper(dt,format);
 }
 // Return the current timestamp plus the specified time units. See also addToTime.
 function getFutureTime(interval, timeUnit, format){
-	return addToTime(luxon.DateTime.local(), interval,timeunit, format);
+	return addToTime(utcNow(), interval,timeUnit, format);
 }
 // Return the current timestamp minus the specified time units. See also subtractFromTime.
 function getPastTime(interval, timeUnit, format){
-	return addToTime(luxon.DateTime.local(), interval*-1,timeunit, format);
+	return addToTime(utcNow(), interval*-1,timeUnit, format);
 }
 // Return the start of the day for a timestamp.
 function startOfDay(timestamp,format){
-	var dt = luxon.DateTime.fromISO(timestamp);
+	argumentHelper(1,2,'string',"startOfDay()",arguments);
+	var dt = _parseTimestamp(timestamp);
 	return _formatHelper(dt.startOf('day'),format);
 }
 // 	Return the start of the hour for a timestamp.
 function startOfHour(timestamp,format){
-	var dt = luxon.DateTime.fromISO(timestamp);
+	argumentHelper(1,2,'string',"startOfHour()",arguments);
+	var dt = _parseTimestamp(timestamp);
 	return _formatHelper(dt.startOf('hour'),format);
 }
 // 	Return the start of the month for a timestamp.
 function startOfMonth(timestamp,format){
-	var dt = luxon.DateTime.fromISO(timestamp);
+	argumentHelper(1,2,'string',"startOfMonth()",arguments);
+	var dt = _parseTimestamp(timestamp);
 	return _formatHelper(dt.startOf('month'),format);
 }
 // Subtract a number of time units from a timestamp. See also getPastTime.
 function subtractFromTime(timestamp, interval, timeUnit, format){
-	return addToTime(luxon.DateTime.fromISO(timestamp),interval*-1,timeunit, format);
+	return addToTime(timestamp,interval*-1,timeUnit, format);
 }
 // Return the ticks property value for a specified timestamp.
 function ticks(timestamp){
-	var dt = luxon.DateTime.fromISO(timestamp);
+	argumentHelper(1,1,'string',"ticks()",arguments);
+	var dt = _parseTimestamp(timestamp);
 	var diffInMilliSeconds = dt.diffNow('milliseconds');
 	return parseInt(diffInMilliSeconds.milliseconds)*-10000;	//a tick is 100 nanoseconds
 }
 // Return the current timestamp as a string.
 function utcNow(format){
+	argumentHelper(0,1,'string',"utcNow()",arguments);
 	return _formatHelper(luxon.DateTime.local(),format);
 }
 
