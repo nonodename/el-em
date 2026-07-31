@@ -123,7 +123,6 @@ describe('Collection functions',function(){
 			});
 		});
 	});
-// TODO implement for object
 	describe('#intersection()', function () {
 		context('with invalid arguments', function(){
 			it('should throw an exception for number arguments', function(){
@@ -137,6 +136,10 @@ describe('Collection functions',function(){
 			it('should throw an exception for empty string', function(){
 				expect(function() {
 					intersection('')}).to.throw(TypeError);
+			});
+			it('should throw an exception for a mix of array and object', function(){
+				expect(function() {
+					intersection([1],{"a":1})}).to.throw(TypeError);
 			});
 		});
 		context('with valid arguments', function() {
@@ -158,8 +161,23 @@ describe('Collection functions',function(){
 			it('should return [2] for intersection of [1,2], [2] and [2,3]', function(){
 				expect(intersection([1,2],[2],[2,3])).to.eql([2]);
 			});
+			it('should return {} for intersection of {} and {}', function(){
+				expect(intersection({},{})).to.eql({});
+			});
+			it('should return {} for intersection of {"a":1} and {}', function(){
+				expect(intersection({"a":1},{})).to.eql({});
+			});
+			it('should return {"a":1} for intersection of {"a":1,"b":2} and {"a":1}', function(){
+				expect(intersection({"a":1,"b":2},{"a":1})).to.eql({"a":1});
+			});
+			it('should drop keys whose values differ, e.g. {"b":2} for intersection of {"a":1,"b":2} and {"a":9,"b":2}', function(){
+				expect(intersection({"a":1,"b":2},{"a":9,"b":2})).to.eql({"b":2});
+			});
+			it('should compare nested values deeply, e.g. {"a":{"x":1}} for intersection of {"a":{"x":1}} and {"a":{"x":1}}', function(){
+				expect(intersection({"a":{"x":1}},{"a":{"x":1}})).to.eql({"a":{"x":1}});
+			});
 		});
-	
+
 		context('without arguments', function() {
 			it('should throw an exception', function() {
 				expect(function() {
@@ -383,6 +401,10 @@ describe('Collection functions',function(){
 				expect(function() {
 					union([1],[3],'')}).to.throw(TypeError);
 			});
+			it('should throw an exception for a mix of array and object', function(){
+				expect(function() {
+					union([1],{"a":1})}).to.throw(TypeError);
+			});
 		});
 		context('with valid arguments', function() {
 			it('should return [] for union of [] and []', function(){
@@ -402,6 +424,18 @@ describe('Collection functions',function(){
 			});
 			it('should return [1,2,3] for union of [1,2], [2] and [2,3]', function(){
 				expect(union([1,2],[2],[2,3])).to.eql([1,2,3]);
+			});
+			it('should return {} for union of {} and {}', function(){
+				expect(union({},{})).to.eql({});
+			});
+			it('should return {"a":1} for union of {"a":1} and {}', function(){
+				expect(union({"a":1},{})).to.eql({"a":1});
+			});
+			it('should return {"a":1,"b":2} for union of {"a":1} and {"b":2}', function(){
+				expect(union({"a":1},{"b":2})).to.eql({"a":1,"b":2});
+			});
+			it('should have the last argument win on duplicate keys, e.g. {"a":2} for union of {"a":1} and {"a":2}', function(){
+				expect(union({"a":1},{"a":2})).to.eql({"a":2});
 			});
 		});
 	

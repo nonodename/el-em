@@ -78,6 +78,21 @@ function trim(text){
 }
 
 // Collection functions
+function _isPlainObject(value){
+	return value !== null && typeof(value) === 'object' && !Array.isArray(value);
+}
+function _deepEquals(a,b){
+	if(a === b) return true;
+	if(_isPlainObject(a) && _isPlainObject(b)){
+		var aKeys = Object.keys(a), bKeys = Object.keys(b);
+		return aKeys.length === bKeys.length &&
+			aKeys.every(k => Object.prototype.hasOwnProperty.call(b,k) && _deepEquals(a[k], b[k]));
+	}
+	if(Array.isArray(a) && Array.isArray(b)){
+		return a.length === b.length && a.every((v,i) => _deepEquals(v, b[i]));
+	}
+	return false;
+}
 // Check whether a collection has a specific item.
 function contains(collection,value){
 	if(arguments.length < 2 || arguments.length > 2){
@@ -121,19 +136,34 @@ function first(collection){
 	}
 }
 // Return a collection that has only the common items across the specified collections.
-// TODO make work on objects
 function intersection(){
 	if(arguments.length < 2)
 		throw new TypeError("intersection(): Not enough arguments to intersection");
-	if(!Array.isArray(arguments[0]))
-		throw new TypeError("intersection(): First argument not an array");
-	var result = arguments[0];
-	for(var i in arguments){
-		if(!Array.isArray(arguments[i]))
-			throw new TypeError("intersection(): Non array passed to intersection");
-		result = result.filter(x => arguments[i].includes(x));
+	if(Array.isArray(arguments[0])){
+		var result = arguments[0];
+		for(var i in arguments){
+			if(!Array.isArray(arguments[i]))
+				throw new TypeError("intersection(): Non array passed to intersection");
+			result = result.filter(x => arguments[i].includes(x));
+		}
+		return result;
+	} else if(_isPlainObject(arguments[0])){
+		var result = arguments[0];
+		for(var i in arguments){
+			if(!_isPlainObject(arguments[i]))
+				throw new TypeError("intersection(): Non object passed to intersection");
+			var other = arguments[i];
+			var next = {};
+			for(var key in result){
+				if(Object.prototype.hasOwnProperty.call(other,key) && _deepEquals(result[key], other[key]))
+					next[key] = result[key];
+			}
+			result = next;
+		}
+		return result;
+	} else {
+		throw new TypeError("intersection(): First argument not an array or object");
 	}
-	return result;
 }
 // Return a string that has all the items from an array, separated by the specified character.
 function join(collection, delimiter){
@@ -197,22 +227,31 @@ function take(collection,count){
 	
 }
 // 	Return a collection that has all the items from the specified collections.
-//  TODO - work on objects
 function union(){
 	if(arguments.length < 2)
 		throw new TypeError("union(): Not enough arguments");
-	if(!Array.isArray(arguments[0]))
-		throw new TypeError("union(): first argument not an array");
-	var result = new Set(arguments[0]);
-	for(var i in arguments){
-		if(!Array.isArray(arguments[i]))
-			throw new TypeError("union(): argument "+i+" not an array");
-		var temp = new Set(arguments[i]);
-		for(var element of temp){
-			result.add(element);
+	if(Array.isArray(arguments[0])){
+		var result = new Set(arguments[0]);
+		for(var i in arguments){
+			if(!Array.isArray(arguments[i]))
+				throw new TypeError("union(): argument "+i+" not an array");
+			var temp = new Set(arguments[i]);
+			for(var element of temp){
+				result.add(element);
+			}
 		}
+		return Array.from(result);
+	} else if(_isPlainObject(arguments[0])){
+		var result = {};
+		for(var i in arguments){
+			if(!_isPlainObject(arguments[i]))
+				throw new TypeError("union(): argument "+i+" not an object");
+			Object.assign(result, arguments[i]);
+		}
+		return result;
+	} else {
+		throw new TypeError("union(): first argument not an array or object");
 	}
-	return Array.from(result);
 }
 /// Logical functions
 
@@ -439,12 +478,13 @@ function json(value){
 		throw new TypeError('json(): XML not supported yet');
 	return JSON.parse(value);
 }
-// TODO: handle JSON (example in docs)
 function string(value){
 	if(arguments.length !== 1)
 		throw new TypeError("string(): Wrong number of arguments");
 	if(value === null)
 		return "";
+	if(typeof(value) === "object")
+		return JSON.stringify(value);
 	return String(value);
 }
 function uriComponent(value){

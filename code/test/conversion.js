@@ -679,7 +679,6 @@ describe('Conversion functions',function(){
 			});
 		});
 	});	
-	// TODO JSON support and investigate behavior for arrays
 	describe('#string()', function () {
 		context('with arguments', function(){
 			it('should throw an exception for > 1 argument', function(){
@@ -688,9 +687,12 @@ describe('Conversion functions',function(){
 			});
 		});
 		context('valid arguments', function() {
-		/*	it('should return string representation of array', function(){
+			it('should return string representation of array', function(){
 				expect(string([1,2,3])).to.be.equals('[1,2,3]');
-			});*/
+			});
+			it('should return string representation of object', function(){
+				expect(string({"a":1})).to.be.equals('{"a":1}');
+			});
 			it('should return empty string for null ', function(){
 				expect(string(null)).to.be.equals("");
 			});
